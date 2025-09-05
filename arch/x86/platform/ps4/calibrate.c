@@ -47,59 +47,14 @@ static __init inline u32 emctimer_read(void)
 
 static __init unsigned long ps4_measure_tsc_freq(void)
 {
-	unsigned long ret = 0;
-	u32 t1, t2;
-	u64 tsc1, tsc2;
+    unsigned long ret;
 
-	// This is part of the Aeolia pcie device, but it's too early to
-	// do this in a driver.
-	emc_timer = early_ioremap(EMC_TIMER_BASE, 0x100);
-	if (!emc_timer)
-		goto fail;
+    // Ignoramos Aeolia y devolvemos valor fijo
+    ret = 2200000000UL; // 2.7 GHz
 
-	// reset/start the timer
-	emctimer_write32(0x84, emctimer_read32(0x84) & (~0x01));
-	// udelay is not calibrated yet, so this is likely wildly off, but good
-	// enough to work.
-	udelay(300);
-	emctimer_write32(0x00, emctimer_read32(0x00) | 0x01);
-	emctimer_write32(0x84, emctimer_read32(0x84) | 0x01);
+    pr_info("ps4: Forzando TSC frequency a %ld Hz\n", ret);
 
-	t1 = emctimer_read();
-	tsc1 = tsc2 = rdtsc();
-
-	while (emctimer_read() == t1) {
-		// 0.1s timeout should be enough
-		tsc2 = rdtsc();
-		if ((tsc2 - tsc1) > (PS4_DEFAULT_TSC_FREQ/10)) {
-			pr_warn("EMC timer is broken.\n");
-			goto fail;
-		}
-	}
-	pr_info("EMC timer started in %lld TSC ticks\n", tsc2 - tsc1);
-
-	// Wait for a tick boundary
-	t1 = emctimer_read();
-	while ((t2 = emctimer_read()) == t1);
-	tsc1 = rdtsc();
-
-	// Wait for 1024 ticks to elapse (31.25ms)
-	// We don't need to wait very long, as we are looking for transitions.
-	// At this value, a TSC uncertainty of ~50 ticks corresponds to 1ppm of
-	// clock accuracy.
-	while ((emctimer_read() - t2) < 1024);
-	tsc2 = rdtsc();
-
-	// TSC rate is 32 times the elapsed time
-	ret = (tsc2 - tsc1) * 32;
-
-	pr_info("Calibrated TSC frequency: %ld kHz\n", ret);
-fail:
-	if (emc_timer) {
-		early_iounmap(emc_timer, 0x100);
-		emc_timer = NULL;
-	}
-	return ret;
+    return ret;
 }
 
 unsigned long __init ps4_calibrate_tsc(void)
