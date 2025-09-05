@@ -49,8 +49,7 @@ static __init unsigned long ps4_measure_tsc_freq(void)
 {
     unsigned long ret;
 
-    // Ignoramos Aeolia y devolvemos valor fijo
-    ret = 2200000000UL; // 2.7 GHz
+    ret = 2500000000UL; // GHz
 
     pr_info("ps4: Forzando TSC frequency a %ld Hz\n", ret);
 
