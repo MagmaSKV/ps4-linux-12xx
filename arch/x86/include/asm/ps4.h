@@ -13,7 +13,7 @@
 
 #include <linux/irqdomain.h>
 
-#define PS4_DEFAULT_TSC_FREQ 2200000000
+#define PS4_DEFAULT_TSC_FREQ 1594000000
 
 #define EMC_TIMER_BASE 0xd0281000
 #define EMC_TIMER_VALUE 0x28
