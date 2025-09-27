@@ -45,7 +45,7 @@ static int __init ps4_update_release_late(void)
     unsigned long vram_gb = read_vram_gb();
     unsigned long cpu_ghz = read_cpu_ghz();
 
-    snprintf(buf, sizeof(buf), " SKV-NFT (%luGB VRAM) (%luGHz)", vram_gb, cpu_ghz);
+    snprintf(buf, sizeof(buf), " (%luGB VRAM) (%luGHz)", vram_gb, cpu_ghz);
 
     strlcpy(u->release, buf, sizeof(u->release));
 
