@@ -102,7 +102,6 @@
 #include <linux/randomize_kstack.h>
 #include <linux/pidfs.h>
 #include <linux/ptdump.h>
-#include <linux/fs.h>
 #include <net/net_namespace.h>
 
 #include <asm/io.h>
@@ -114,8 +113,6 @@
 #include <trace/events/initcall.h>
 
 #include <kunit/test.h>
-
-extern unsigned long ps4_vram_mb;      // si lo pasas desde payload
 
 static int kernel_init(void *);
 
@@ -1594,48 +1591,3 @@ static noinline void __init kernel_init_freeable(void)
 
 	integrity_load_keys();
 }
-
-static unsigned long ps4_read_vram_gb(void)
-{
-    struct file *f;
-    char buf[32] = {0};
-    loff_t pos = 0;
-    unsigned long vram_bytes = 0;
-    unsigned long vram_gb = 0;
-    long ret;
-
-    f = filp_open("/sys/class/drm/card0/device/mem_info_vram_total", O_RDONLY, 0);
-    if (IS_ERR(f))
-        return 0;
-
-    ret = kernel_read(f, buf, sizeof(buf) - 1, &pos);
-    filp_close(f, NULL);
-    if (ret < 0)
-        return 0;
-
-    if (kstrtoul(buf, 10, &vram_bytes) != 0)
-        return 0;
-
-    vram_gb = vram_bytes / (1024UL * 1024UL * 1024UL);
-    return vram_gb;
-}
-
-static void __init ps4_update_release(void)
-{
-    struct new_utsname *u = utsname();
-    char buf[128];
-    unsigned long vram_gb = ps4_read_vram_gb();
-
-    snprintf(buf, sizeof(buf), "%s SKV-NFT (%luGB VRAM)", u->release, vram_gb);
-
-    /* reemplaza release con memcpy + asegurando \0 */
-    memcpy(u->release, buf, min(sizeof(u->release)-1, (size_t)strlen(buf)));
-    u->release[min(sizeof(u->release)-1, strlen(buf))] = '\0';
-}
-
-static int __init customize_release(void)
-{
-    ps4_update_release();
-    return 0;
-}
-late_initcall(customize_release);
