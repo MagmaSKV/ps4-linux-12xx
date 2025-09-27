@@ -50,7 +50,7 @@ static __init unsigned long ps4_measure_tsc_freq(void)
 {
     unsigned long ret;
 
-    ret = 2500000000UL; // GHz 1594000000UL
+    ret = 1594000000UL;
 
     pr_info("ps4: Forzando TSC frequency a %ld Hz\n", ret);
 
@@ -59,16 +59,33 @@ static __init unsigned long ps4_measure_tsc_freq(void)
 
 static int __init ps4_tsc_freq_setup(char *str)
 {
+    char buf[11]; // 10 dígitos + null terminator
     unsigned long val;
+    int len, i;
 
     if (!str)
         return -EINVAL;
 
-    if (kstrtoul(str, 0, &val) == 0) {
-        ps4_tsc_freq_override = val;
-        pr_info("ps4: TSC frequency override set to %lu Hz\n", ps4_tsc_freq_override);
+    len = strlen(str);
+
+    if (len < 10) {
+        // Copiar lo que haya
+        strcpy(buf, str);
+        // Rellenar con ceros hasta 10
+        for (i = len; i < 10; i++)
+            buf[i] = '0';
+        buf[10] = '\0';
     } else {
-        pr_warn("ps4: Invalid TSC frequency override: %s\n", str);
+        // Copiar solo los primeros 10 caracteres
+        strncpy(buf, str, 10);
+        buf[10] = '\0';
+    }
+
+    if (kstrtoul(buf, 0, &val) == 0) {
+        ps4_tsc_freq_override = val;
+        pr_info("ps4: TSC frequency override set to %lu Hz (from '%s')\n", ps4_tsc_freq_override, buf);
+    } else {
+        pr_warn("ps4: Invalid TSC frequency override: %s\n", buf);
     }
 
     return 0;
