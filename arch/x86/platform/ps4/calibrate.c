@@ -92,7 +92,7 @@ static int __init ps4_tsc_freq_setup(char *str)
 }
 early_param("ps4_tsc_freq", ps4_tsc_freq_setup);
 
-static unsigned long ps4_calibrate_tsc(void)
+unsigned long ps4_calibrate_tsc(void)
 {
     unsigned long tsc_freq;
 
