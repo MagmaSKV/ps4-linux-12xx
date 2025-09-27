@@ -8,6 +8,7 @@
 #include <linux/slab.h>
 #include <asm/ps4.h>
 #include <linux/delay.h>
+#include <linux/kthread.h>
 
 static unsigned long read_vram_gb(void)
 {
