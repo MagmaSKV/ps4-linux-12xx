@@ -51,7 +51,8 @@ static int __init ps4_update_release_late(void)
 
     snprintf(buf, sizeof(buf), "SKV-NFT (%luGB VRAM) (%luGHz)", vram_gb, cpu_ghz);
 
-    strlcpy(u->release, buf, sizeof(u->release));
+    strncpy(u->release, buf, sizeof(u->release) - 1);
+    u->release[sizeof(u->release) - 1] = '\0';
 
     pr_info("PS4 uname release updated: %s\n", u->release);
 
