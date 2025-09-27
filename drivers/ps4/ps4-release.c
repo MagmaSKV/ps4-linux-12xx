@@ -42,20 +42,20 @@ static unsigned long read_cpu_ghz(void)
     return (freq_hz + 500000000) / 1000000000;   // redondear a GHz
 }
 
-static int __init ps4_update_release_late(void)
+static int __init ps4_release_module_init(void)
 {
     struct new_utsname *u = utsname();
-    char buf[65]; // __NEW_UTS_LEN
+    char buf[65];
     unsigned long vram_gb = read_vram_gb();
     unsigned long cpu_ghz = read_cpu_ghz();
 
-    snprintf(buf, sizeof(buf), "SKV-NFT (%luGB VRAM) (%luGHz)", vram_gb, cpu_ghz);
+    snprintf(buf, sizeof(buf), " (%luGB VRAM) (%luGHz)", vram_gb, cpu_ghz);
 
-    strncpy(u->release, buf, sizeof(u->release) - 1);
-    u->release[sizeof(u->release) - 1] = '\0';
+    strncpy(u->release, buf, sizeof(u->release)-1);
+    u->release[sizeof(u->release)-1] = '\0';
 
     pr_info("PS4 uname release updated: %s\n", u->release);
 
     return 0;
 }
-late_initcall(ps4_update_release_late);
+module_init(ps4_release_module_init);
