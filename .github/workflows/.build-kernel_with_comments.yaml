@@ -372,7 +372,7 @@ jobs:
           export localversion=`cat .config | grep LOCALVERSION | sed -nE 's|^.*=||p' | tr -d '"'`
           # Using uppercase localversion will mess with your final kernel img version.
 
-          rm -f ${PWD}/gce/*/pkg/kernel_*.tar.gz
+          rm -f /container/workspace/kernel-source-container/kernel_*.tar.gz
           
           export GCE_PKG_DIR=${PWD}/gce/${localversion}/pkg
           export GCE_INSTALL_DIR=${PWD}/gce/${localversion}/install
