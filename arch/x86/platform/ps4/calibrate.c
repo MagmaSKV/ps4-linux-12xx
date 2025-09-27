@@ -22,6 +22,7 @@
  * and the LAPIC timer are based on the core clock frequency and thus can be
  * calibrated together. */
 static void __iomem *emc_timer = NULL;
+static unsigned long ps4_tsc_freq_override = 0;
 
 static __init inline u32 emctimer_read32(unsigned int reg)
 {
@@ -56,16 +57,40 @@ static __init unsigned long ps4_measure_tsc_freq(void)
     return ret;
 }
 
+static int __init ps4_tsc_freq_setup(char *str)
+{
+    unsigned long val;
+
+    if (!str)
+        return -EINVAL;
+
+    if (kstrtoul(str, 0, &val) == 0) {
+        ps4_tsc_freq_override = val;
+        pr_info("ps4: TSC frequency override set to %lu Hz\n", ps4_tsc_freq_override);
+    } else {
+        pr_warn("ps4: Invalid TSC frequency override: %s\n", str);
+    }
+
+    return 0;
+}
+early_param("ps4_tsc_freq", ps4_tsc_freq_setup);
+
 unsigned long __init ps4_calibrate_tsc(void)
 {
-	unsigned long tsc_freq = ps4_measure_tsc_freq();
+    unsigned long tsc_freq;
 
-	if (!tsc_freq) {
-		pr_warn("Unable to measure TSC frequency, assuming default.\n");
-		tsc_freq = PS4_DEFAULT_TSC_FREQ;
-	}
+    if (ps4_tsc_freq_override) {
+        tsc_freq = ps4_tsc_freq_override;
+        pr_info("ps4: Using bootarg TSC frequency override: %lu Hz\n", tsc_freq);
+    } else {
+        tsc_freq = ps4_measure_tsc_freq();
+        if (!tsc_freq) {
+            pr_warn("Unable to measure TSC frequency, assuming default.\n");
+            tsc_freq = PS4_DEFAULT_TSC_FREQ;
+        }
+    }
 
-	lapic_timer_period = (tsc_freq + 8 * HZ) / (16 * HZ);
+    lapic_timer_period = (tsc_freq + 8 * HZ) / (16 * HZ);
 
-	return (tsc_freq + 500) / 1000;
+    return (tsc_freq + 500) / 1000;
 }
