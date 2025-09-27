@@ -327,6 +327,8 @@ jobs:
           #fi;
           #Removed for now; directly fixed the case where GH wouldn't upload artifact because of missing localversion variable.
 
+          rm -f ${PWD}/gce/*/pkg/kernel_*.tar.gz
+
           export GCE_PKG_DIR=${PWD}/gce/${localversion}/pkg
           export GCE_INSTALL_DIR=${PWD}/gce/${localversion}/install
           export GCE_BUILD_DIR=${PWD}/gce/${localversion}/build
