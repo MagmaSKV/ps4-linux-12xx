@@ -42,15 +42,19 @@ static unsigned long read_cpu_ghz(void)
     return (freq_hz + 500000000) / 1000000000;   // redondear a GHz
 }
 
-static int __init ps4_update_release_late(void)
+static int ps4_release_thread(void *arg)
 {
+    unsigned long vram_gb = 0, cpu_ghz = 0;
     struct new_utsname *u = utsname();
-    char buf[65]; // __NEW_UTS_LEN
-    unsigned long vram_gb = read_vram_gb();
-    unsigned long cpu_ghz = read_cpu_ghz();
+    char buf[65];
 
-    snprintf(buf, sizeof(buf), "TEST1 (%luGB VRAM) (%luGHz)", vram_gb, cpu_ghz);
+    // Esperar a que DRM se inicialice (~5s, ajustar si es necesario)
+    msleep(5000);
 
+    vram_gb = read_vram_gb();
+    cpu_ghz = read_cpu_ghz();
+
+    snprintf(buf, sizeof(buf), "(%luGB VRAM) (%luGHz)", vram_gb, cpu_ghz);
     strncpy(u->release, buf, sizeof(u->release)-1);
     u->release[sizeof(u->release)-1] = '\0';
 
@@ -59,4 +63,9 @@ static int __init ps4_update_release_late(void)
     return 0;
 }
 
-late_initcall_sync(ps4_update_release_late);
+static int __init ps4_release_thread_init(void)
+{
+    kthread_run(ps4_release_thread, NULL, "ps4_release");
+    return 0;
+}
+late_initcall(ps4_release_thread_init);
