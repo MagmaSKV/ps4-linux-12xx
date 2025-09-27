@@ -1602,15 +1602,19 @@ static unsigned long ps4_read_vram_gb(void)
     loff_t pos = 0;
     unsigned long vram_bytes = 0;
     unsigned long vram_gb = 0;
+    long ret;
 
-    /* abrir sysfs */
     f = filp_open("/sys/class/drm/card0/device/mem_info_vram_total", O_RDONLY, 0);
     if (IS_ERR(f))
         return 0;
 
-    kernel_read(f, buf, sizeof(buf) - 1, &pos);
-    kstrtoul(buf, 10, &vram_bytes);
+    ret = kernel_read(f, buf, sizeof(buf) - 1, &pos);
     filp_close(f, NULL);
+    if (ret < 0)
+        return 0;
+
+    if (kstrtoul(buf, 10, &vram_bytes) != 0)
+        return 0;
 
     vram_gb = vram_bytes / (1024UL * 1024UL * 1024UL);
     return vram_gb;
@@ -1622,10 +1626,11 @@ static void __init ps4_update_release(void)
     char buf[128];
     unsigned long vram_gb = ps4_read_vram_gb();
 
-    snprintf(buf, sizeof(buf), "%s SKV-NFT (%luGB VRAM)",
-             u->release, vram_gb);
+    snprintf(buf, sizeof(buf), "%s SKV-NFT (%luGB VRAM)", u->release, vram_gb);
 
-    strlcpy(u->release, buf, sizeof(u->release));
+    /* reemplaza release con memcpy + asegurando \0 */
+    memcpy(u->release, buf, min(sizeof(u->release)-1, (size_t)strlen(buf)));
+    u->release[min(sizeof(u->release)-1, strlen(buf))] = '\0';
 }
 
 static int __init customize_release(void)
