@@ -42,14 +42,14 @@ static unsigned long read_cpu_ghz(void)
     return (freq_hz + 500000000) / 1000000000;   // redondear a GHz
 }
 
-static int __init ps4_release_module_init(void)
+static int __init ps4_update_release_late(void)
 {
     struct new_utsname *u = utsname();
-    char buf[65];
+    char buf[65]; // __NEW_UTS_LEN
     unsigned long vram_gb = read_vram_gb();
     unsigned long cpu_ghz = read_cpu_ghz();
 
-    snprintf(buf, sizeof(buf), " (%luGB VRAM) (%luGHz)", vram_gb, cpu_ghz);
+    snprintf(buf, sizeof(buf), "TEST1 (%luGB VRAM) (%luGHz)", vram_gb, cpu_ghz);
 
     strncpy(u->release, buf, sizeof(u->release)-1);
     u->release[sizeof(u->release)-1] = '\0';
@@ -58,4 +58,5 @@ static int __init ps4_release_module_init(void)
 
     return 0;
 }
-module_init(ps4_release_module_init);
+
+late_initcall_sync(ps4_update_release_late);
