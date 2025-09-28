@@ -60,15 +60,15 @@ static int ps4_release_thread(void *arg)
 {
     unsigned long vram_gb = 0, cpu_ghz = 0;
     struct new_utsname *u = utsname();
-    char buf[65];
+    char base[65];
+    char buf[128];
 
-    // Esperar a que DRM se inicialice (~5s, ajustar si es necesario)
     msleep(5000);
 
     vram_gb = read_vram_gb();
     cpu_ghz = read_cpu_ghz();
 
-    strlcpy(base, u->release, sizeof(base));
+    strncpy(base, u->release, sizeof(base));
 
     for (char *p = base; *p; p++) {
         if (*p == '_')
