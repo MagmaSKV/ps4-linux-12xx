@@ -69,16 +69,15 @@ static int ps4_release_thread(void *arg)
     vram_gb = read_vram_gb();
     cpu_ghz = read_cpu_ghz();
 
-    /* Saltar guiones o underscores iniciales */
-    src = u->release;
-    while (*src == '-' || *src == '_')
+    src = strchr(u->release, '-');
+    if (src)
         src++;
+    else
+        src = u->release;
 
-    /* Copiar ya limpio */
     strncpy(base, src, sizeof(base));
     base[sizeof(base)-1] = '\0';
 
-    /* Reemplazar '_' por espacio */
     for (char *p = base; *p; p++) {
         if (*p == '_')
             *p = ' ';
