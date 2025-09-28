@@ -62,20 +62,32 @@ static int ps4_release_thread(void *arg)
     struct new_utsname *u = utsname();
     char base[65];
     char buf[128];
+    const char *src;
 
     msleep(5000);
 
     vram_gb = read_vram_gb();
     cpu_ghz = read_cpu_ghz();
 
-    strncpy(base, u->release, sizeof(base));
+    /* Saltar guiones o underscores iniciales */
+    src = u->release;
+    while (*src == '-' || *src == '_')
+        src++;
 
+    /* Copiar ya limpio */
+    strncpy(base, src, sizeof(base));
+    base[sizeof(base)-1] = '\0';
+
+    /* Reemplazar '_' por espacio */
     for (char *p = base; *p; p++) {
         if (*p == '_')
             *p = ' ';
     }
 
-    snprintf(buf, sizeof(buf), "%s (%lu.%luGB VRAM) (%lu.%luGHz)", base, vram_gb / 10, vram_gb % 10, cpu_ghz / 10, cpu_ghz % 10);
+    snprintf(buf, sizeof(buf), "%s (%lu.%luGB VRAM) (%lu.%luGHz)",
+             base, vram_gb / 10, vram_gb % 10,
+             cpu_ghz / 10, cpu_ghz % 10);
+
     strncpy(u->release, buf, sizeof(u->release)-1);
     u->release[sizeof(u->release)-1] = '\0';
 
