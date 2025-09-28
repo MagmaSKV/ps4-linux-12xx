@@ -97,11 +97,8 @@ unsigned long ps4_calibrate_tsc(void)
         tsc_freq = ps4_tsc_freq_override;
         pr_info("ps4: Using bootarg TSC frequency override: %lu Hz\n", tsc_freq);
     } else {
-        tsc_freq = ps4_measure_tsc_freq();
-        if (!tsc_freq) {
-            pr_warn("Unable to measure TSC frequency, assuming default.\n");
-            tsc_freq = PS4_DEFAULT_TSC_FREQ;
-        }
+        pr_warn("Unable to measure TSC frequency, assuming default.\n");
+        tsc_freq = PS4_DEFAULT_TSC_FREQ;
     }
 
     lapic_timer_period = (tsc_freq + 8 * HZ) / (16 * HZ);
