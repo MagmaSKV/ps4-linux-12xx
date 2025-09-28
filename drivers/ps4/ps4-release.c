@@ -10,6 +10,8 @@
 #include <linux/delay.h>
 #include <linux/kthread.h>
 
+extern unsigned long ps4_tsc_freq_hz;
+
 static unsigned long read_vram_gb(void)
 {
     struct file *f;
@@ -34,13 +36,24 @@ static unsigned long read_vram_gb(void)
 
     filp_close(f, NULL);
 
-    return vram_bytes >> 30; // Pasar a GB
+    unsigned long vram_gb = (vram_bytes * 10 + (1UL << 29)) >> 30;
+    return vram_gb;
 }
 
 static unsigned long read_cpu_ghz(void)
 {
-    unsigned long freq_hz = ps4_calibrate_tsc(); // tu función
-    return (freq_hz + 500000000) / 1000000000;   // redondear a GHz
+    unsigned long hz = ps4_tsc_freq_hz;
+    unsigned long mhz = (hz + 500000) / 1000000;
+
+    unsigned long ghz_int = mhz / 1000;
+    unsigned long ghz_frac = ((mhz % 1000) + 50) / 100;
+
+    if (ghz_frac == 10) { //X.95 -> X+1.0
+        ghz_int += 1;
+        ghz_frac = 0;
+    }
+	
+    return ghz_int * 10 + ghz_frac;
 }
 
 static int ps4_release_thread(void *arg)
