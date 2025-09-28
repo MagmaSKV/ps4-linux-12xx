@@ -68,6 +68,15 @@ static int ps4_release_thread(void *arg)
     vram_gb = read_vram_gb();
     cpu_ghz = read_cpu_ghz();
 
+    strlcpy(base, u->release, sizeof(base));
+
+    for (char *p = base; *p; p++) {
+        if (*p == '_')
+            *p = ' ';
+    }
+
+    snprintf(buf, sizeof(buf), "%s (%lu.%luGB VRAM) (%lu.%luGHz)", base, vram_gb / 10, vram_gb % 10, cpu_ghz / 10, cpu_ghz % 10);
+
     snprintf(buf, sizeof(buf), "(%luGB VRAM) (%luGHz)", vram_gb, cpu_ghz);
     strncpy(u->release, buf, sizeof(u->release)-1);
     u->release[sizeof(u->release)-1] = '\0';
