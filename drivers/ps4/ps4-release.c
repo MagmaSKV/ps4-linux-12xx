@@ -60,40 +60,28 @@ static int ps4_release_thread(void *arg)
 {
     unsigned long vram_gb = 0, cpu_ghz = 0;
     struct new_utsname *u = utsname();
-    char base[65];
     char buf[128];
     char new_version[256];
-    const char *src;
 
     msleep(5000);
 
     vram_gb = read_vram_gb();
     cpu_ghz = read_cpu_ghz();
 
-    src = strchr(u->release, '-');
-    if (src)
-        src++;
-    else
-        src = u->release;
-
-    strncpy(base, src, sizeof(base));
-    base[sizeof(base)-1] = '\0';
-
-    for (char *p = base; *p; p++) {
-        if (*p == '_')
-            *p = ' ';
-    }
-
-    snprintf(buf, sizeof(buf), "%s (%lu.%luGB VRAM) (%lu.%luGHz)",
-             base, vram_gb / 10, vram_gb % 10,
+    // Branding visual limpio
+    snprintf(buf, sizeof(buf), "(%lu.%luGB VRAM) (%lu.%luGHz)",
+             vram_gb / 10, vram_gb % 10,
              cpu_ghz / 10, cpu_ghz % 10);
 
+    // Copiamos versión original
     strncpy(new_version, u->version, sizeof(new_version) - 1);
     new_version[sizeof(new_version) - 1] = '\0';
 
-    strlcat(new_version, " | ", sizeof(new_version));
+    // Concatenamos branding
+    strlcat(new_version, " ", sizeof(new_version));
     strlcat(new_version, buf, sizeof(new_version));
 
+    // Reemplazamos u->version
     strncpy(u->version, new_version, sizeof(u->version) - 1);
     u->version[sizeof(u->version) - 1] = '\0';
 
