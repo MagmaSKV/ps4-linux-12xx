@@ -62,6 +62,7 @@ static int ps4_release_thread(void *arg)
     struct new_utsname *u = utsname();
     char base[65];
     char buf[128];
+    char new_version[256];
     const char *src;
 
     msleep(5000);
@@ -87,10 +88,16 @@ static int ps4_release_thread(void *arg)
              base, vram_gb / 10, vram_gb % 10,
              cpu_ghz / 10, cpu_ghz % 10);
 
-    strncpy(u->release, buf, sizeof(u->release)-1);
-    u->release[sizeof(u->release)-1] = '\0';
+    strncpy(new_version, u->version, sizeof(new_version) - 1);
+    new_version[sizeof(new_version) - 1] = '\0';
 
-    pr_info("PS4 uname release updated: %s\n", u->release);
+    strlcat(new_version, " | ", sizeof(new_version));
+    strlcat(new_version, buf, sizeof(new_version));
+
+    strncpy(u->version, new_version, sizeof(u->version) - 1);
+    u->version[sizeof(u->version) - 1] = '\0';
+
+    pr_info("PS4 uname branding added: %s\n", buf);
 
     return 0;
 }
