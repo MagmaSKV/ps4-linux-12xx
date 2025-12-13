@@ -327,6 +327,22 @@ static int gmc_v7_0_mc_init(struct amdgpu_device *adev)
 {
 	int r;
 
+	if (adev->asic_type == CHIP_LIVERPOOL || adev->asic_type == CHIP_GLADIUS) {
+        // Liverpool/Gladius tienen configuración FIJA de memoria GDDR5
+        adev->gmc.vram_type = AMDGPU_VRAM_TYPE_GDDR5; // Asegurar que está seteado
+        adev->gmc.vram_width = 256; // Ancho de bus FIJO: 256-bit (32 bytes)
+        
+        // El tamaño de VRAM es dinámico (vram= bootarg), pero el kernel ya leyó CONFIG_MEMSIZE
+        // Podemos dejar que use el valor detectado.
+        
+        dev_info(adev->dev, "PS4 GPU: Forzando vram_width=%d, vram_type=GDDR5\n", 
+                 adev->gmc.vram_width);
+        
+        // Saltamos la detección automática incorrecta para estas GPUs
+        // y vamos directamente a configurar el resto.
+        goto skip_auto_detection;
+    }
+
 	adev->gmc.vram_width = amdgpu_atombios_get_vram_width(adev);
 	if (!adev->gmc.vram_width) {
 		u32 tmp;
@@ -372,6 +388,9 @@ static int gmc_v7_0_mc_init(struct amdgpu_device *adev)
 		}
 		adev->gmc.vram_width = numchan * chansize;
 	}
+
+skip_auto_detection:
+
 	/* size in MB on si */
 	adev->gmc.mc_vram_size = RREG32(mmCONFIG_MEMSIZE) * 1024ULL * 1024ULL;
 	adev->gmc.real_vram_size = RREG32(mmCONFIG_MEMSIZE) * 1024ULL * 1024ULL;
@@ -1006,7 +1025,19 @@ static int gmc_v7_0_sw_init(struct amdgpu_ip_block *ip_block)
 	set_bit(AMDGPU_GFXHUB(0), adev->vmhubs_mask);
 
 	if (adev->flags & AMD_IS_APU) {
-		adev->gmc.vram_type = AMDGPU_VRAM_TYPE_UNKNOWN;
+	    /* Liverpool (PS4) es una APU con GDDR5 dedicado, no desconocido */
+	    if (adev->asic_type == CHIP_LIVERPOOL || adev->asic_type == CHIP_GLADIUS) {
+	        adev->gmc.vram_type = AMDGPU_VRAM_TYPE_GDDR5; // Tipo de VRAM FIJO
+	        // Liverpool tiene ancho de bus FIJO de 256-bit (32 bytes)
+	        adev->gmc.vram_width = 256;
+	        // Opcional: forzar gb_addr_config aquí si encontramos el campo
+	        // adev->gmc.gb_addr_config = 0x2a9a4e00;
+	        dev_info(adev->dev, "PS4 GPU: Forzando vram_type=GDDR5, vram_width=%d\n",
+	                 adev->gmc.vram_width);
+	    } else {
+	        // Otras APUs (Kaveri, Kabini...) mantienen el comportamiento original
+	        adev->gmc.vram_type = AMDGPU_VRAM_TYPE_UNKNOWN;
+	    }
 	} else {
 		u32 tmp = RREG32(mmMC_SEQ_MISC0);
 
